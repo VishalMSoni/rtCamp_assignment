@@ -31,13 +31,13 @@ EOF
 }
 
 installmySQL() {
-  MYSQL_ROOT_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
-  WP_DB_PASSWORD=$MYSQL_ROOT_PASSWORD
+  MYSQL_ROOT_PASSWORD=root
+  WP_DB_PASSWORD=root
   WP_DB_USERNAME="root"
   echo "mysql-server-5.7 mysql-server/root_password password $MYSQL_ROOT_PASSWORD" | sudo debconf-set-selections
   echo "mysql-server-5.7 mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD" | sudo debconf-set-selections
   sudo apt install -y mysql-server
-  echo -e "MySql is installed for root user with password : \e[1m\e[32m$MYSQL_ROOT_PASSWORD"
+  echo -e "MySql is installed for root user with password : $MYSQL_ROOT_PASSWORD"
 }
 
 dpkg -l | grep 'nginx'
