@@ -46,3 +46,6 @@ if [ $? == 0 ]; then
 else
   installNginx $1
 fi
+
+installmySQL
+
