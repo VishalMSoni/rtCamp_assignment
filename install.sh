@@ -88,13 +88,12 @@ function installWordPress() {
 
 function configWordpress() {
   sudo chown -R www-data:www-data /var/www/$1
-#curl -s https://api.wordpress.org/secret-key/1.1/salt/
-road=$pwd
-cd /var/www/$1
-  sed -c -i "s/\($DB_NAME *= *\).*/\1wordpress/" wp-config.php
-  sed -c -i "s/\($DB_USER *= *\).*/\1root/" wp-config.php
-  sed -c -i "s/\($DB_PASSWORD *= *\).*/\1root/" wp-config.php
-cd $road
+  road=$pwd
+  cd /var/www/$1
+  sed -i s/database_name_here/$1_db/ wp-config.php
+  sed -i s/username_here/root/ wp-config.php
+  sed -i s/password_here/root/ wp-config.php
+  cd $road
 }
 
 function removehost() {
