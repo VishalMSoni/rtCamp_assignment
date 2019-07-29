@@ -90,9 +90,9 @@ function configWordpress() {
   sudo chown -R www-data:www-data /var/www/$1
   road=$pwd
   cd /var/www/$1
-  sed -i s/database_name_here/$1_db/ wp-config.php
-  sed -i s/username_here/root/ wp-config.php
-  sed -i s/password_here/root/ wp-config.php
+  sudo sed -i s/database_name_here/$1/ wp-config.php
+  sudo sed -i s/username_here/root/ wp-config.php
+  sudo sed -i s/password_here/root/ wp-config.php
   cd $road
 }
 
