@@ -88,11 +88,13 @@ function installWordPress() {
 
 function configWordpress() {
   sudo chown -R www-data:www-data /var/www/$1
-  curl -s https://api.wordpress.org/secret-key/1.1/salt/ >SomeFile.txt
-  sudo nano /var/www/$1/wp-config.php
+#curl -s https://api.wordpress.org/secret-key/1.1/salt/
+road=$pwd
+cd /var/www/$1
   sed -c -i "s/\($DB_NAME *= *\).*/\1wordpress/" wp-config.php
   sed -c -i "s/\($DB_USER *= *\).*/\1root/" wp-config.php
   sed -c -i "s/\($DB_PASSWORD *= *\).*/\1root/" wp-config.php
+cd $road
 }
 
 function removehost() {
@@ -146,3 +148,5 @@ else
   installPHP
   confConfig $1
 fi
+
+sudo systemctl restart nginx
