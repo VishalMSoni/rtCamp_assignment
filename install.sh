@@ -157,6 +157,7 @@ if [ $? == 0 ]; then
   addhost $1
   installWordPress $1
   configWordpress $1
+  confConfig $1
 else
   installPHP
   confConfig $1
