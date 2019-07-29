@@ -17,8 +17,8 @@ installNginx() {
 }
 
 confConfig() {
-sudo rm -rf /etc/nginx/sites-available/$1
-sudo tee /etc/nginx/sites-available/$1 <<EOF
+  sudo rm -rf /etc/nginx/sites-available/$1
+  sudo tee /etc/nginx/sites-available/$1 <<EOF
 server {
     listen 80;
     listen [::]:80;
@@ -56,18 +56,17 @@ installmySQL() {
 
 mySQLConfig() {
   mysql -u root -proot <<EOF
-    CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-    GRANT ALL ON wordpress.* TO 'root'@'localhost' IDENTIFIED BY 'root';
+    CREATE DATABASE $1 DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+    GRANT ALL ON $1.* TO 'root'@'localhost' IDENTIFIED BY 'root';
     FLUSH PRIVILEGES;
     EXIT;
 EOF
 }
 
 installPHP() {
-sudo apt install -y php-fpm
+  sudo apt install -y php-fpm
   sudo apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
   sudo systemctl restart php7.2-fpm
-  #sudo nano /etc/nginx/sites-available/$1
 }
 
 dpkg -l | grep 'nginx'
@@ -77,14 +76,19 @@ else
   installNginx $1
 fi
 
-dpkg -l | grep 'nginx'
+dpkg -l | grep 'mysql'
 if [ $? == 0 ]; then
   echo "MySQL is installed !!!"
-  mySQLConfig
+  mySQLConfig $1
 else
   installmySQL
 fi
 
-confConfig $1
-installPHP
+dpkg -l | grep 'php'
+if [ $? == 0 ]; then
+  echo "PHP is installed !!!"
+else
+  installPHP
+  confConfig $1
+fi
 
