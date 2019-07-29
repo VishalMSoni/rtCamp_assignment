@@ -69,6 +69,20 @@ installPHP() {
   sudo systemctl restart php7.2-fpm
 }
 
+installWordPress() {
+  cd /tmp
+  curl -LO https://wordpress.org/latest.tar.gz
+  tar xzvf latest.tar.gz
+  cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
+}
+
+configWordpress() {
+  sudo cp -a /tmp/wordpress/. /var/www/$1
+  sudo chown -R www-data:www-data /var/www/$1
+  curl -s https://api.wordpress.org/secret-key/1.1/salt/ > SomeFile.txt  
+  sudo nano /var/www/$1/wp-config.php
+}
+
 dpkg -l | grep 'nginx'
 if [ $? == 0 ]; then
   echo "Nginx is installed !!!"
@@ -92,3 +106,4 @@ else
   confConfig $1
 fi
 
+installWordPress
