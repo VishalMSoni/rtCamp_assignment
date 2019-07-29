@@ -22,17 +22,17 @@ function installNginx() {
     sudo chown -R $USER:$USER /var/www/$1/html
     sudo chmod -R 755 /var/www/$1
     sudo tee /etc/nginx/sites-available/$1 <<EOF
-server {
-listen 80;
-listen [::]:80;
-root /var/www/html/$1;
+    server {
+      listen 80;
+      listen [::]:80;
+      root /var/www/html/$1;
 
-index index.php index.html index.htm index.nginx-debian.html;
-server_name $1 www.$1;
-location / {
-try_files $uri ${uri}/ =404;
-}
-}
+      index index.php index.html index.htm index.nginx-debian.html;
+      server_name $1 www.$1;
+      location / {
+        try_files $uri ${uri}/ =404;
+      }
+    }
 EOF
     sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
     sudo systemctl restart nginx
@@ -42,21 +42,20 @@ EOF
 function confConfig() {
   sudo rm -rf /etc/nginx/sites-available/$1
   sudo tee /etc/nginx/sites-available/$1 <<EOF
-server {
-listen 80;
-listen [::]:80;
-root /var/www/html/$1;
+  server {
+    listen 80;
+    listen [::]:80;
+    root /var/www/html/$1;
 
-index index.php index.html index.htm index.nginx-debian.html;
-server_name $1 www.$1;
-location / {
-try_files $uri ${uri}/ =404;
-try_files $uri $uri/ /index.php$is_args$args;
-}
-location ~ \.php$ {
-include snippets/fastcgi-php.conf;
-fastcgi_pass unix:/run/php/php7.2-fpm.sock;
-}
+    index index.php index.html index.htm index.nginx-debian.html;
+    server_name $1 www.$1;
+    location / {
+      try_files $uri ${uri}/ =404;
+    }
+    location ~ \.php$ {
+      include snippets/fastcgi-php.conf;
+      fastcgi_pass unix:/run/php/php7.2-fpm.sock;
+    }
 }
 EOF
   #sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
