@@ -12,7 +12,12 @@ installNginx() {
     sudo mkdir -p /var/www/$1/html
     sudo chown -R $USER:$USER /var/www/$1/html
     sudo chmod -R 755 /var/www/$1
-    sudo tee /etc/nginx/sites-available/$1 <<EOF
+    confConfig
+  fi
+}
+
+confConfig() {
+  sudo tee /etc/nginx/sites-available/$1 <<EOF
   server {
     listen 80;
     listen [::]:80;
@@ -21,12 +26,20 @@ installNginx() {
     index index.php index.html index.htm index.nginx-debian.html;
     server_name $1 www.$1;
     location / {
-            try_files $uri ${uri}/ =404;
+        try_files $uri ${uri}/ =404;
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php7.2-fpm.sock;
     }
   }
 EOF
-    sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
-    sudo systemctl restart nginx
+  sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
+  sudo systemctl restart nginx
+  sudo nginx -t
+  if [ $? == 0 ]; then
+    sudo systemctl reload nginx
   fi
 }
 
@@ -40,6 +53,21 @@ installmySQL() {
   echo -e "MySql is installed for root user with password : $MYSQL_ROOT_PASSWORD"
 }
 
+mySQLConfig() {
+  mysql -u root -proot <<EOF
+    CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+    GRANT ALL ON wordpress.* TO 'root'@'localhost' IDENTIFIED BY 'root';
+    FLUSH PRIVILEGES;
+    EXIT;
+EOF
+}
+
+installPHP() {
+  sudo apt install php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
+  sudo systemctl restart php7.2-fpm
+  sudo nano /etc/nginx/sites-available/$1
+}
+
 dpkg -l | grep 'nginx'
 if [ $? == 0 ]; then
   echo "Nginx is installed !!!"
@@ -47,5 +75,13 @@ else
   installNginx $1
 fi
 
-installmySQL
+dpkg -l | grep 'nginx'
+if [ $? == 0 ]; then
+  echo "MySQL is installed !!!"
+  mySQLConfig
+else
+  installmySQL
+fi
 
+confConfig
+installPHP
