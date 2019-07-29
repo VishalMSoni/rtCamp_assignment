@@ -59,12 +59,9 @@ fastcgi_pass unix:/run/php/php7.2-fpm.sock;
 }
 }
 EOF
-  sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
+  #sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
   sudo systemctl restart nginx
-  sudo nginx -t
-  if [ $? == 0 ]; then
-    sudo systemctl reload nginx
-  fi
+  sudo systemctl reload nginx
 }
 
 function installmySQL() {
@@ -157,10 +154,10 @@ if [ $? == 0 ]; then
   addhost $1
   installWordPress $1
   configWordpress $1
-  confConfig $1
+  #confConfig $1
 else
   installPHP
-  confConfig $1
+  #confConfig $1
 fi
 
 sudo systemctl restart nginx
