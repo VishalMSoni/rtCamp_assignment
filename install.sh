@@ -17,8 +17,9 @@ installNginx() {
 }
 
 confConfig() {
-  sudo tee /etc/nginx/sites-available/$1 <<EOF
-  server {
+sudo rm -rf /etc/nginx/sites-available/$1
+sudo tee /etc/nginx/sites-available/$1 <<EOF
+server {
     listen 80;
     listen [::]:80;
     root /var/www/html/$1;
@@ -63,9 +64,10 @@ EOF
 }
 
 installPHP() {
-  sudo apt install php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
+sudo apt install -y php-fpm
+  sudo apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
   sudo systemctl restart php7.2-fpm
-  sudo nano /etc/nginx/sites-available/$1
+  #sudo nano /etc/nginx/sites-available/$1
 }
 
 dpkg -l | grep 'nginx'
@@ -83,5 +85,6 @@ else
   installmySQL
 fi
 
-confConfig
+confConfig $1
 installPHP
+
