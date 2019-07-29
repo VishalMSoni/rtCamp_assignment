@@ -1,6 +1,15 @@
 #!/bin/bash
 
-installNginx() {
+# PATH TO YOUR HOSTS FILE
+ETC_HOSTS=/etc/hosts
+
+# DEFAULT IP FOR HOSTNAME
+IP="127.0.0.1"
+
+# Hostname to add/remove.
+HOSTNAME=$1
+
+function installNginx() {
   sudo apt update
   sudo apt install nginx
   sudo ufw allow 'Nginx Full'
@@ -16,9 +25,9 @@ installNginx() {
   fi
 }
 
-confConfig() {
-sudo rm -rf /etc/nginx/sites-available/$1
-sudo tee /etc/nginx/sites-available/$1 <<EOF
+function confConfig() {
+  sudo rm -rf /etc/nginx/sites-available/$1
+  sudo tee /etc/nginx/sites-available/$1 <<EOF
 server {
 listen 80;
 listen [::]:80;
@@ -36,26 +45,26 @@ fastcgi_pass unix:/run/php/php7.2-fpm.sock;
 }
 }
 EOF
-sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
-sudo systemctl restart nginx
-sudo nginx -t
-if [ $? == 0 ]; then
-sudo systemctl reload nginx
-fi
+  sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
+  sudo systemctl restart nginx
+  sudo nginx -t
+  if [ $? == 0 ]; then
+    sudo systemctl reload nginx
+  fi
 }
 
-installmySQL() {
-MYSQL_ROOT_PASSWORD=root
-WP_DB_PASSWORD=root
-WP_DB_USERNAME="root"
-echo "mysql-server-5.7 mysql-server/root_password password $MYSQL_ROOT_PASSWORD" | sudo debconf-set-selections
-echo "mysql-server-5.7 mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD" | sudo debconf-set-selections
-sudo apt install -y mysql-server
-echo -e "MySql is installed for root user with password : $MYSQL_ROOT_PASSWORD"
+function installmySQL() {
+  MYSQL_ROOT_PASSWORD=root
+  WP_DB_PASSWORD=root
+  WP_DB_USERNAME="root"
+  echo "mysql-server-5.7 mysql-server/root_password password $MYSQL_ROOT_PASSWORD" | sudo debconf-set-selections
+  echo "mysql-server-5.7 mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD" | sudo debconf-set-selections
+  sudo apt install -y mysql-server
+  echo -e "MySql is installed for root user with password : $MYSQL_ROOT_PASSWORD"
 }
 
-mySQLConfig() {
-mysql -u root -proot <<EOF
+function mySQLConfig() {
+  mysql -u root -proot <<EOF
 CREATE DATABASE $1 DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 GRANT ALL ON $1.* TO 'root'@'localhost' IDENTIFIED BY 'root';
 FLUSH PRIVILEGES;
@@ -63,25 +72,53 @@ EXIT;
 EOF
 }
 
-installPHP() {
-sudo apt install -y php-fpm
-sudo apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
-sudo systemctl restart php7.2-fpm
+function installPHP() {
+  sudo apt install -y php-fpm
+  sudo apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
+  sudo systemctl restart php7.2-fpm
 }
 
-installWordPress() {
-cd /tmp
-curl -LO https://wordpress.org/latest.tar.gz
-tar xzvf latest.tar.gz
-cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
-sudo cp -a /tmp/wordpress/. /var/www/$1
-}
-
-configWordpress() {
+function installWordPress() {
+  cd /tmp
+  curl -LO https://wordpress.org/latest.tar.gz
+  tar xzvf latest.tar.gz
+  cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
   sudo cp -a /tmp/wordpress/. /var/www/$1
+}
+
+function configWordpress() {
   sudo chown -R www-data:www-data /var/www/$1
-  curl -s https://api.wordpress.org/secret-key/1.1/salt/ > SomeFile.txt  
+  curl -s https://api.wordpress.org/secret-key/1.1/salt/ >SomeFile.txt
   sudo nano /var/www/$1/wp-config.php
+  sed -c -i "s/\($DB_NAME *= *\).*/\1wordpress/" wp-config.php
+  sed -c -i "s/\($DB_USER *= *\).*/\1root/" wp-config.php
+  sed -c -i "s/\($DB_PASSWORD *= *\).*/\1root/" wp-config.php
+}
+
+function removehost() {
+  if [ -n "$(grep $HOSTNAME /etc/hosts)" ]; then
+    echo "$HOSTNAME Found in your $ETC_HOSTS, Removing now..."
+    sudo sed -i".bak" "/$HOSTNAME/d" $ETC_HOSTS
+  else
+    echo "$HOSTNAME was not found in your $ETC_HOSTS"
+  fi
+}
+
+function addhost() {
+  HOSTNAME=$1
+  HOSTS_LINE="$IP\t$HOSTNAME"
+  if [ -n "$(grep $HOSTNAME /etc/hosts)" ]; then
+    echo "$HOSTNAME already exists : $(grep $HOSTNAME $ETC_HOSTS)"
+  else
+    echo "Adding $HOSTNAME to your $ETC_HOSTS"
+    sudo -- sh -c -e "echo '$HOSTS_LINE' >> /etc/hosts"
+
+    if [ -n "$(grep $HOSTNAME /etc/hosts)" ]; then
+      echo "$HOSTNAME was added succesfully \n $(grep $HOSTNAME /etc/hosts)"
+    else
+      echo "Failed to Add $HOSTNAME, Try again!"
+    fi
+  fi
 }
 
 dpkg -l | grep 'nginx'
@@ -102,9 +139,10 @@ fi
 dpkg -l | grep 'php'
 if [ $? == 0 ]; then
   echo "PHP is installed !!!"
+  addhost $1
+  installWordPress $1
+  configWordpress $1
 else
   installPHP
   confConfig $1
 fi
-
-installWordPress $1
