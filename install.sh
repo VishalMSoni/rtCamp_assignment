@@ -42,6 +42,7 @@ EOF
 
 function confConfig() {
   sudo rm -rf /etc/nginx/sites-available/$1
+sudo rm -rf /etc/nginx/sites-enabled/$1
   sudo tee /etc/nginx/sites-available/$1 <<EOF
   server {
     listen 80;
@@ -59,7 +60,7 @@ function confConfig() {
     }
 }
 EOF
-  #sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
+  sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
   sudo systemctl restart nginx
   sudo systemctl reload nginx
 }
