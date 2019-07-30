@@ -9,6 +9,8 @@ IP="127.0.0.1"
 # Hostname to add/remove.
 HOSTNAME=$1
 
+domain="$(cut -d'.' -f1 <<<"$1")";
+
 function installNginx() {
   sudo apt update
   sudo apt -y install nginx
@@ -58,10 +60,10 @@ function installmySQL() {
 
 function mySQLConfig() {
   sudo mysql -u root -proot <<EOF
-    CREATE DATABASE $1_db;
-    GRANT ALL ON $1_db.* TO 'root'@'localhost';
+    CREATE DATABASE ${domain}_db;
+    GRANT ALL ON ${domain}_db.* TO 'root'@'localhost';
     FLUSH PRIVILEGES;
-    EXIT;
+    exit;
 EOF
 }
 
@@ -83,7 +85,7 @@ function configWordpress() {
   sudo chown -R www-data:www-data /var/www/html/$1
   road=$pwd
   cd /var/www/html/$1
-  sudo sed -i s/database_name_here/$1_db/ wp-config.php
+  sudo sed -i s/database_name_here/${domain}_db/ wp-config.php
   sudo sed -i s/username_here/root/ wp-config.php
   sudo sed -i s/password_here/root/ wp-config.php
   SALT=$(curl -L https://api.wordpress.org/secret-key/1.1/salt/)
@@ -129,7 +131,7 @@ fi
 dpkg -l | grep 'mysql'
 if [ $? == 0 ]; then
   echo "MySQL is installed !!!"
-  mySQLConfig $1
+  mySQLConfig $1 $domain
 else
   installmySQL
 fi
@@ -142,7 +144,7 @@ else
 fi
 installWordPress $1
 confConfig $1
-configWordpress $1
+configWordpress $1 $domain
 addhost $1
 
 sudo systemctl restart nginx
