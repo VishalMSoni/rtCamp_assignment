@@ -16,40 +16,13 @@ function installNginx() {
   # nginxConifg $1
 }
 
-function nginxConifg() {
-  curl -4 localhost
-  uri='$uri'
-  if [ $? == 0 ]; then
-    echo "Works"
-    sudo systemctl start nginx
-    sudo systemctl enable nginx
-    sudo mkdir -p /var/www/html/$1
-    sudo chown -R $USER:$USER /var/www/html
-    sudo chmod -R 755 /var/www/html
-    sudo tee /etc/nginx/sites-available/$1 <<EOF
-    server {
-      listen 80;
-      listen [::]:80;
-      root /var/www/html/$1;
-
-      index index.php index.html index.htm index.nginx-debian.html;
-      server_name $1 www.$1;
-      location / {
-        try_files $uri {$uri}/ =404;
-      }
-    }
-EOF
-    sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
-    sudo systemctl restart nginx
-  fi
-}
-
 function confConfig() {
   sudo systemctl start nginx
   sudo systemctl enable nginx
   sudo mkdir -p /var/www/html/$1
-  sudo chown -R $USER:$USER /var/www/html
-  sudo chmod -R 755 /var/www/html
+  sudo chown -R $USER:$USER /var/www/html/
+  sudo chmod -R 755 /var/www/html/
+  uri='$uri';
   # sudo rm -rf /etc/nginx/sites-available/$1
   # sudo rm -rf /etc/nginx/sites-enabled/$1
   sudo tee /etc/nginx/sites-available/$1 <<EOF
@@ -70,6 +43,7 @@ function confConfig() {
   }
 EOF
   sudo ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
+  # sudo unlink /etc/nginx/sites-enabled/default
   sudo systemctl restart nginx
   sudo systemctl reload nginx
 }
@@ -87,7 +61,7 @@ function installmySQL() {
 
 function mySQLConfig() {
   sudo mysql -u root -proot <<EOF
-    CREATE DATABASE example;
+    CREATE DATABASE wordpress;
     GRANT ALL ON wordpress.* TO 'root'@'localhost';
     FLUSH PRIVILEGES;
     EXIT;
@@ -96,7 +70,7 @@ EOF
 
 function installPHP() {
   sudo apt install -y php-fpm
-  sudo apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip
+  sudo apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip php-mysql
   sudo systemctl restart php7.2-fpm
 }
 
@@ -175,3 +149,4 @@ configWordpress $1
 addhost $1
 
 sudo systemctl restart nginx
+sudo systemctl reload nginx
