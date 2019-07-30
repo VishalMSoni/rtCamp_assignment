@@ -115,6 +115,9 @@ function configWordpress() {
   sudo sed -i s/database_name_here/wordpress/ wp-config.php
   sudo sed -i s/username_here/root/ wp-config.php
   sudo sed -i s/password_here/root/ wp-config.php
+  SALT=$(curl -L https://api.wordpress.org/secret-key/1.1/salt/)
+  STRING='put your unique phrase here'
+  printf '%s\n' "g/$STRING/d" a "$SALT" . w | ed -s wp-config.php
   cd $road
 }
 
